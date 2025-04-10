@@ -3,7 +3,7 @@ import java.util.Scanner;
 public class BigVigenere {
 
     private int[] key;
-    private char[][] alphabet;
+    private char[][] matriz ;
     private char[] cifrado;
     private char[] descrifrado;
 
@@ -11,8 +11,6 @@ public class BigVigenere {
         if (c >= 'a' && c <= 'z') return c - 'a';
         if (c >= 'A' && c <= 'Z') return 26 + (c - 'A');
         if (c >= '0' && c <= '9') return 52 + (c - '0');
-        if (c == '[') return 62;
-        if (c == ']') return 63;
         return -1;
     }
 
@@ -27,8 +25,7 @@ public class BigVigenere {
         if (a >= 'a' && a <= 'z') return a - 'a';
         if (a >= 'A' && a <= 'Z') return 26 + (a - 'A');
         if (a >= '0' && a <= '9') return 52 + (a - '0');
-        if (a == '[') return 62;
-        if (a == ']') return 63;
+
         return -1;
     }
 
@@ -39,15 +36,34 @@ public class BigVigenere {
         return b== 62 ? '[' : ']';
     }
 
-    public static char[][] BigVigenere() {
+    public  BigVigenere() {
         Scanner key= new Scanner(System.in);
         System.out.print("Ingrese la key  ");
         int numericKey=key.nextInt();
 
-        char[][] matriz = new char[62][62];
+        this.matriz = new char[62][62];
+        inicializarMatriz();
+    }
+    public BigVigenere(String numericKey) {
+        char[] keypa = numericKey.toCharArray();
+        this.key = new int[keypa.length];
+
+        for(int i = 0; i <keypa.length; i++) {
+            this.key[i] = charToPosition(keypa[i]);
+        }
+        this.matriz = new char[62][62];
+        inicializarMatriz();
+
+
+
+
+    }
+    private void inicializarMatriz()
+    {
+
         for(int i = 0; i < 62; i++) {
             for(int j = 0; j < 62; j++) {
-                matriz[i][j] = '0';
+                this.matriz[i][j] = '0';
             }
         }
 
@@ -55,7 +71,7 @@ public class BigVigenere {
         for (int i = 0; i < 26; i++) {
             for (int j = 0; j < 26; j++) {
 
-                matriz[i][j] = (char) ('a' + (i + j) % 26);
+                this.matriz[i][j] = (char) ('a' + (i + j) % 26);
             }
         }
 
@@ -66,7 +82,7 @@ public class BigVigenere {
             int cont4=0;
             for(int j=0;j<52;j++) {
                 if(matriz[i][j]=='0') {
-                    matriz[i][j] = (char) ('A' + (cont3-1 + cont4) % 26);
+                    this.matriz[i][j] = (char) ('A' + (cont3-1 + cont4) % 26);
                     cont4++;
                 }
             }
@@ -82,79 +98,87 @@ public class BigVigenere {
             int contb=0;
             for(int j=0;j<62;j++) {
                 if(matriz[i][j]=='0') {
-                    matriz[i][j] = (char) ('0' + ((conta-1) + contb) % 10);
+                    this.matriz[i][j] = (char) ('0' + ((conta-1) + contb) % 10);
                     contb++;
                 }
             }
         }
 
-        return matriz;
+
+
     }
 
-    public BigVigenere(String numericKey) {
-        char[] keypa = numericKey.toCharArray();
-        this.key = new int[keypa.length];
 
-        for(int i = 0; i <keypa.length; i++) {
-            this.key[i] = charToPosition(keypa[i]);
-        }
-    }
 
     public String encrypt(String message) {
-        char[]messagearr=message.toCharArray();
-        cifrado=new char[messagearr.length];
+        char[] messagearr = message.toCharArray();
+        cifrado = new char[messagearr.length];
 
-        for(int i = 0; i < messagearr.length; i++) {
+        for (int i = 0; i < messagearr.length; i++) {
+            int j = i % key.length;
             int pos = charToPosition(messagearr[i]);
-            cifrado[i] = positionToChar((pos + key[i % key.length]) % 64);
+            cifrado[i] = matriz[pos][key[j]];
+
         }
+
         return new String(cifrado);
     }
 
     public String decrypt(String encryptedMessage) {
-        char[] descrifrado = encryptedMessage.toCharArray();
+        char[] encryptedArr = encryptedMessage.toCharArray();
+        char[] decrypted = new char[encryptedArr.length];
 
-        for (int i = 0; i < descrifrado.length; i++) {
-            int pos = charToValue(descrifrado[i]);
-            if (pos != -1) {
-                int ok = key[i % key.length];
-                descrifrado[i] = valueToChar((pos - ok + 64) % 64);
+        for (int i = 0; i < encryptedArr.length; i++) {
+            int j = i % key.length;
+            int colu = key[j];
+            for (int fila = 0; fila < matriz.length; fila++) {
+                if (matriz[fila][colu] == encryptedArr[i]) {
+                    decrypted[i] = positionToChar(fila);
+                    break;
+                }
             }
         }
-
-        return new String(descrifrado);
+        return new String(decrypted);
     }
 
     public void reEncrypt() {
 
-        if(cifrado != null) {
-            for(int i =0;i<cifrado.length;i++) {
-                System.out.print(cifrado[i]);
-            }
+        Scanner scanner = new Scanner(System.in);
+
+
+        System.out.print("Ingrese el mensaje encriptado actual: ");
+        String mensajeEncriptado = scanner.nextLine();
+
+
+        String mensajeDescifrado = this.decrypt(mensajeEncriptado);
+        System.out.println("Mensaje descifrado: " + mensajeDescifrado);
+
+
+        System.out.print("Ingrese la nueva clave: ");
+        String nuevaClave = scanner.nextLine();
+
+
+        char[] keyChars = nuevaClave.toCharArray();
+        this.key = new int[keyChars.length];
+        for (int i = 0; i < keyChars.length; i++) {
+            this.key[i] = charToPosition(keyChars[i]);
         }
 
-        if(descrifrado != null) {
-            for(int i =0;i<descrifrado.length;i++) {
-                System.out.print(descrifrado[i]);
-            }
-        }
 
-        Scanner clavenueva = new Scanner(System.in);
-        System.out.print("Ingrese clave nueva ");
-        String nuevaClave = clavenueva.next();
+        String nuevoMensajeEncriptado = this.encrypt(mensajeDescifrado);
 
 
-        BigVigenere nuevo = new BigVigenere(nuevaClave);
+        System.out.println("Nuevo mensaje encriptado: " + nuevoMensajeEncriptado);
 
 
     }
 
     public char search(int position) {
         int cont=0;
-        for(int i = 0;i<alphabet.length;i++) {
-            for(int j=0;j<alphabet[i].length;j++) {
+        for(int i = 0;i<matriz.length;i++) {
+            for(int j=0;j<matriz[i].length;j++) {
                 if(position==cont) {
-                    return alphabet[i][j];
+                    return matriz[i][j];
                 }
                 else {
                     cont++;
@@ -167,7 +191,7 @@ public class BigVigenere {
     public char optimalSearch(int position) {
         int fila = position / 62;
         int columna = position % 62;
-        return alphabet[fila][columna];
+        return matriz[fila][columna];
     }
 
     public static void main(String[] args) {
@@ -197,6 +221,10 @@ public class BigVigenere {
                 String mensaje = scanner.nextLine();
                 String cifrado = vigenere.encrypt(mensaje);
                 System.out.println("Mensaje cifrado: " + cifrado);
+
+
+
+
             }
             else if (opcion == 2) {
                 System.out.print("Ingrese el mensaje a descifrar: ");
